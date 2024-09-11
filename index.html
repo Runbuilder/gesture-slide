@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티처블 머신을 활용한 웹앱 만들기</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .slide-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .slide.active {
+            display: block;
+        }
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        p {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        button {
+            font-size: 1em;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #label-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            font-size: 0.9em;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #start-button {
+            font-size: 1.5em;
+            padding: 15px 30px;
+            margin-top: 20px;
+            background-color: #3498db;
+        }
+        #start-button:hover {
+            background-color: #2980b9;
+        }
+        .page-number {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1em;
+            color: #333;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide active" id="title-slide">
+            <h1>티처블 머신을 활용한 웹앱 만들기</h1>
+            <button id="start-button" onclick="startPresentation()">Start</button>
+        </div>
+        <div class="slide">
+            <h1>티처블 머신 소개</h1>
+            <p>AI 기술을 손쉽게 활용하는 방법</p>
+            <p>손 제스처로 슬라이드를 넘겨보세요!</p>
+        </div>
+        <div class="slide">
+            <h1>티처블 머신이란?</h1>
+            <p>- 구글에서 개발한 웹 기반 머신러닝 도구</p>
+            <p>- 코딩 없이 AI 모델 생성 가능</p>
+            <p>- 이미지, 오디오, 포즈 데이터 학습 가능</p>
+        </div>
+        <div class="slide">
+            <h1>웹앱 개발 과정</h1>
+            <p>1. 티처블 머신에서 모델 학습</p>
+            <p>2. 모델 내보내기 (TensorFlow.js)</p>
+            <p>3. 웹 프론트엔드 구현</p>
+            <p>4. 모델 연동 및 기능 구현</p>
+        </div>
+        <div class="slide">
+            <h1>손 제스처 인식 웹앱 예시</h1>
+            <p>- 감정 표현 이모티콘 생성기</p>
+            <p>- 간단한 DJ 믹싱 앱</p>
+            <p>- 프레젠테이션 컨트롤러 (현재 사용 중!)</p>
+            <p>- 가상 악기 연주 앱</p>
+        </div>
+        <div class="slide">
+            <h1>마무리</h1>
+            <p>티처블 머신으로 다양한 아이디어를 쉽게 구현해보세요!</p>
+            <p>질문이 있으신가요?</p>
+        </div>
+        <div class="slide">
+            <h1>감사합니다</h1>
+            <p>프레젠테이션에 참여해 주셔서 감사합니다.</p>
+        </div>
+        <div class="page-number"></div>
+    </div>
+    <div class="controls">
+        <button id="prev-button" onclick="changeSlide(-1)">이전</button>
+        <button id="next-button" onclick="changeSlide(1)">다음</button>
+    </div>
+    <div id="label-container"></div>
+    <div class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const URL = "https://teachablemachine.withgoogle.com/models/wYAKylP5S/";
+        let model, webcam, labelContainer, maxPredictions;
+        let canChangeSlide = true;
+
+        function updatePageNumber() {
+            const pageNumber = document.querySelector('.page-number');
+            pageNumber.textContent = `${currentSlide} / ${slides.length - 1}`;
+        }
+
+        function updateNavigationButtons() {
+            const prevButton = document.getElementById('prev-button');
+            const nextButton = document.getElementById('next-button');
+            
+            prevButton.style.display = currentSlide === 0 ? 'none' : 'inline-block';
+            nextButton.style.display = currentSlide === slides.length - 1 ? 'none' : 'inline-block';
+
+            if (currentSlide === 0) {
+                document.querySelector('.controls').style.display = 'none';
+            } else {
+                document.querySelector('.controls').style.display = 'block';
+            }
+        }
+
+        function changeSlide(direction) {
+            if (!canChangeSlide) return;
+            if (direction === 1 && currentSlide === slides.length - 1) return;
+            if (direction === -1 && currentSlide === 0) return;
+
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + direction + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+            updatePageNumber();
+            updateNavigationButtons();
+
+            canChangeSlide = false;
+            setTimeout(() => { canChangeSlide = true; }, 1000);
+        }
+
+        async function startPresentation() {
+            document.getElementById('title-slide').style.display = 'none';
+            document.querySelector('.loading').style.display = 'flex';
+            await init();
+            document.querySelector('.loading').style.display = 'none';
+            changeSlide(1);  // Move to the next slide
+        }
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const flip = true;
+            webcam = new tmImage.Webcam(200, 200, flip);
+            try {
+                await webcam.setup();
+                await webcam.play();
+                window.requestAnimationFrame(loop);
+
+                labelContainer = document.getElementById("label-container");
+                for (let i = 0; i < maxPredictions; i++) {
+                    labelContainer.appendChild(document.createElement("div"));
+                }
+            } catch (e) {
+                console.error("웹캠 접근이 거부되었습니다.", e);
+                alert("웹캠 접근이 거부되었습니다. 프레젠테이션을 계속하려면 웹캠 접근을 허용해주세요.");
+            }
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+
+            // 손 제스처에 따른 슬라이드 제어
+            if (canChangeSlide) {
+                if (prediction[0].probability > 0.9) {
+                    changeSlide(1);  // 다음 슬라이드
+                } else if (prediction[1].probability > 0.9) {
+                    changeSlide(-1);  // 이전 슬라이드
+                }
+            }
+        }
+
+        // 초기화
+        updatePageNumber();
+        updateNavigationButtons();
+    </script>
+</body>
+</html>
